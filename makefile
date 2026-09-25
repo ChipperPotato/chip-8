@@ -2,7 +2,7 @@
 CXX := g++
 
 # Compiler flags
-CXXFLAGS := -Wall -std=c++11 -I include
+CXXFLAGS := -Wall -std=c++17 -I include
 
 TARGET := chip8
 
