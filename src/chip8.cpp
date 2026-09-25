@@ -2,6 +2,9 @@
 #include <fstream>
 #include <filesystem>
 
+#include <iostream>
+#include <iomanip>
+
 // Most Chip-8 programs start at 0x200
 const unsigned int START_ADDR = 0x200;
 
@@ -36,4 +39,20 @@ bool Chip8::loadROM(const std::string& filename) {
 
 	delete[] buffer;
 	return true;
+}
+
+// Fetch/decode/execute loop
+void Chip8::cycle() {
+	// Fetch 16-bit opcodes, remember, our memory is in bytes
+	uint16_t opcode = (memory[pc] << 8 | memory[pc + 1]);
+
+	// DEBUG: Print out the current OP Code
+	std::cout << "PC: 0x"
+	          << std::hex               // Print in hexadecimal
+	          << std::setw(3)           // PC represented in 3 hex digits
+	          << this->pc
+	          << " | Opcode: 0x"
+	          << std::setw(4)           // Opcodes represented in 4 hex digits
+	          << opcode
+						<< std::dec << std::endl; // Back to decimal
 }
