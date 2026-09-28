@@ -269,96 +269,137 @@ void Chip8::OP_00E0(const uint16_t opcode) {
 	// DEBUG: Print out the current OP Code
 	std::cout << " | CLS" << std::endl;
 
+	// TODO: this is probably some SDL stuff
 }
 
 // RET
 void Chip8::OP_00EE(const uint16_t opcode) {
-
+	index = stack[sp];
+	sp--;
 }
 
-// SYS add
+// SYS addr
 void Chip8::OP_0nnn(const uint16_t opcode) {
-
+	// ignored instruction
 }
 
 // JP addr
 void Chip8::OP_1nnn(const uint16_t opcode) {
-
+	pc = (opcode & 0x0FFF);
 }
 
 // CALL addr
 void Chip8::OP_2nnn(const uint16_t opcode) {
-
+	stack[sp++] = index;
 }
 
 // SE Vx, byte
 void Chip8::OP_3xkk(const uint16_t opcode) {
-
+	if (registers[opcode & 0x0F00 >> 8] == (opcode & 0x00FF)) {
+		pc += 2;
+	}
 }
 
 // SNE Vx, byte
 void Chip8::OP_4xkk(const uint16_t opcode) {
-
+	if (registers[opcode & 0x0F00 >> 8] != (opcode & 0x00FF)) {
+		pc += 2;
+	}
 }
 
 // SE Vx, Vy
 void Chip8::OP_5xy0(const uint16_t opcode) {
-
+	if (registers[opcode & 0x0F00 >> 8] == registers[opcode & 0x00F0 >> 4]) {
+		pc += 2;
+	}
 }
 
 // LD Vx, byte
 void Chip8::OP_6xkk(const uint16_t opcode) {
-
+	registers[opcode & 0x0F00 >> 8] = opcode & 0x00FF;
 }
 
 // ADD Vx, byte
 void Chip8::OP_7xkk(const uint16_t opcode) {
-
+	registers[opcode & 0x0F00 >> 8] += opcode & 0x00FF;
 }
 
 // LD Vx, Vy
 void Chip8::OP_8xy0(const uint16_t opcode) {
-
+	registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x00F0 >> 8];
 }
 
 // OR Vx, Vy
 void Chip8::OP_8xy1(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
 
+	registers[Vx] = registers[Vx] | registers[Vy];
 }
 
 // AND Vx, Vy
 void Chip8::OP_8xy2(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
 
+	registers[Vx] = registers[Vx] & registers[Vy];
 }
 
 // XOR Vx, Vy
 void Chip8::OP_8xy3(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
 
+	registers[Vx] = registers[Vx] ^ registers[Vy];
 }
 
 // ADD Vx, Vy
 void Chip8::OP_8xy4(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
 
+	uint8_t sum = registers[Vx] + registers[Vy];
+
+	registers[0xF] = sum > 255 ? 1 : 0;
+	registers[Vx] = sum & 0xFF;
 }
 
 // SUB Vx, Vy
 void Chip8::OP_8xy5(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
 
+	uint8_t difference = registers[Vx] - registers[Vy];
+
+	registers[0xF] = registers[Vx] > registers[Vy] ? 1 : 0;
+	registers[Vx] = difference & 0xFF;
 }
 
 // SHR Vx {, Vy}
 void Chip8::OP_8xy6(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
 
+	registers[0xF] = opcode & 0x0001;
+	registers[Vx] = registers[Vx] >> 1;
 }
 
 // SUBN Vx, Vy
 void Chip8::OP_8xy7(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
 
+	uint8_t difference = registers[Vy] - registers[Vx];
+
+	registers[0xF] = registers[Vy] > registers[Vx] ? 1 : 0;
+	registers[Vx] = difference & 0xFF;
 }
 
 // SHL Vx {, Vy}
 void Chip8::OP_8xyE(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
 
+	registers[0xF] = opcode & 0x0001;
+	registers[Vx] = registers[Vx] << 1;
 }
 
 // SNE Vx, Vy
@@ -440,6 +481,8 @@ void Chip8::OP_Fx55(const uint16_t opcode) {
 void Chip8::OP_Fx65(const uint16_t opcode) {
 
 }
+
+// ------------ Super Chip-48 ------------
 
 // SCD nibble
 void Chip8::OP_00Cn(const uint16_t opcode) {
