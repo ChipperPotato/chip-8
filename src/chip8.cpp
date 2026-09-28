@@ -61,6 +61,17 @@ void Chip8::cycle() {
 	// Update program counter
 	pc += 2;
 
+	// DEBUG: Print out the current OP Code
+	std::cout << "PC: 0x"
+	          << std::hex               // Print in hexadecimal
+	          << std::setfill('0')
+	          << std::setw(3)           // PC represented in 3 hex digits
+	          << this->pc
+	          << " | Opcode: 0x"
+	          << std::setw(4)           // Opcodes represented in 4 hex digits
+	          << opcode
+						<< std::dec;              // Back to decimal
+
 	// DECODE the opcode
 	switch (opcode & 0xF000) {
 
@@ -249,123 +260,233 @@ void Chip8::cycle() {
 			std::cout << "Unknown opcode: " << opcode << std::endl;
 			break;
 	}
-
-	// DEBUG: Print out the current OP Code
-	std::cout << "PC: 0x"
-	          << std::hex               // Print in hexadecimal
-	          << std::setfill('0')
-	          << std::setw(3)           // PC represented in 3 hex digits
-	          << this->pc
-	          << " | Opcode: 0x"
-	          << std::setw(4)           // Opcodes represented in 4 hex digits
-	          << opcode
-						<< std::dec;              // Back to decimal
 }
 
 // EXECUTE opcodes
 
 // CLS
-void OP_00E0(const uint16_t opcode) {
+void Chip8::OP_00E0(const uint16_t opcode) {
+	// DEBUG: Print out the current OP Code
+	std::cout << " | CLS" << std::endl;
 
 }
 
 // RET
-void OP_00EE(const uint16_t opcode);
+void Chip8::OP_00EE(const uint16_t opcode) {
+
+}
 
 // SYS add
-void OP_0nnn(const uint16_t opcode);
+void Chip8::OP_0nnn(const uint16_t opcode) {
+
+}
+
 // JP addr
-void OP_1nnn(const uint16_t opcode);
+void Chip8::OP_1nnn(const uint16_t opcode) {
+
+}
 
 // CALL addr
-void OP_2nnn(const uint16_t opcode);
+void Chip8::OP_2nnn(const uint16_t opcode) {
+
+}
 
 // SE Vx, byte
-void OP_3xkk(const uint16_t opcode);
+void Chip8::OP_3xkk(const uint16_t opcode) {
+
+}
 
 // SNE Vx, byte
-void OP_4xkk(const uint16_t opcode);
+void Chip8::OP_4xkk(const uint16_t opcode) {
+
+}
 
 // SE Vx, Vy
-void OP_5xy0(const uint16_t opcode);
+void Chip8::OP_5xy0(const uint16_t opcode) {
+
+}
 
 // LD Vx, byte
-void OP_6xkk(const uint16_t opcode);
+void Chip8::OP_6xkk(const uint16_t opcode) {
+
+}
 
 // ADD Vx, byte
-void OP_7xkk(const uint16_t opcode);
+void Chip8::OP_7xkk(const uint16_t opcode) {
+
+}
 
 // LD Vx, Vy
-void OP_8xy0(const uint16_t opcode);
+void Chip8::OP_8xy0(const uint16_t opcode) {
+
+}
 
 // OR Vx, Vy
-void OP_8xy1(const uint16_t opcode);
+void Chip8::OP_8xy1(const uint16_t opcode) {
+
+}
 
 // AND Vx, Vy
-void OP_8xy2(const uint16_t opcode);
+void Chip8::OP_8xy2(const uint16_t opcode) {
+
+}
 
 // XOR Vx, Vy
-void OP_8xy3(const uint16_t opcode);
+void Chip8::OP_8xy3(const uint16_t opcode) {
+
+}
 
 // ADD Vx, Vy
-void OP_8xy4(const uint16_t opcode);
+void Chip8::OP_8xy4(const uint16_t opcode) {
+
+}
 
 // SUB Vx, Vy
-void OP_8xy5(const uint16_t opcode);
+void Chip8::OP_8xy5(const uint16_t opcode) {
+
+}
 
 // SHR Vx {, Vy}
-void OP_8xy6(const uint16_t opcode);
+void Chip8::OP_8xy6(const uint16_t opcode) {
+
+}
 
 // SUBN Vx, Vy
-void OP_8xy7(const uint16_t opcode);
+void Chip8::OP_8xy7(const uint16_t opcode) {
+
+}
 
 // SHL Vx {, Vy}
-void OP_8xyE(const uint16_t opcode);
+void Chip8::OP_8xyE(const uint16_t opcode) {
+
+}
 
 // SNE Vx, Vy
-void OP_9xy0(const uint16_t opcode);
+void Chip8::OP_9xy0(const uint16_t opcode) {
+
+}
 
 // LD I, addr
-void OP_Annn(const uint16_t opcode);
+void Chip8::OP_Annn(const uint16_t opcode) {
+
+}
 
 // JP V0, addr
-void OP_Bnnn(const uint16_t opcode);
+void Chip8::OP_Bnnn(const uint16_t opcode) {
+
+}
 
 // RND Vx, byte
-void OP_Cxkk(const uint16_t opcode);
+void Chip8::OP_Cxkk(const uint16_t opcode) {
+
+}
 
 // DRW Vx, Vy, nibble
-void OP_Dxyn(const uint16_t opcode);
+void Chip8::OP_Dxyn(const uint16_t opcode) {
+
+}
 
 // SKP Vx
-void OP_Ex9E(const uint16_t opcode);
+void Chip8::OP_Ex9E(const uint16_t opcode) {
+
+}
 
 // SKNP Vx
-void OP_ExA1(const uint16_t opcode);
+void Chip8::OP_ExA1(const uint16_t opcode) {
+
+}
 
 // LD Vx, DT
-void OP_Fx07(const uint16_t opcode);
+void Chip8::OP_Fx07(const uint16_t opcode) {
+
+}
 
 // LD Vx, K
-void OP_Fx0A(const uint16_t opcode);
+void Chip8::OP_Fx0A(const uint16_t opcode) {
+
+}
 
 // LD DT, Vx
-void OP_Fx15(const uint16_t opcode);
+void Chip8::OP_Fx15(const uint16_t opcode) {
+
+}
 
 // LD ST, Vx
-void OP_Fx18(const uint16_t opcode);
+void Chip8::OP_Fx18(const uint16_t opcode) {
+
+}
 
 // ADD I, Vx
-void OP_Fx1E(const uint16_t opcode);
+void Chip8::OP_Fx1E(const uint16_t opcode) {
+
+}
 
 // LD F, Vx
-void OP_Fx29(const uint16_t opcode);
+void Chip8::OP_Fx29(const uint16_t opcode) {
+
+}
 
 // LD B, Vx
-void OP_Fx33(const uint16_t opcode);
+void Chip8::OP_Fx33(const uint16_t opcode) {
+
+}
 
 // LD [I], Vx
-void OP_Fx55(const uint16_t opcode);
+void Chip8::OP_Fx55(const uint16_t opcode) {
+
+}
 
 // LD Vx, [I]
-void OP_Fx65(const uint16_t opcode);
+void Chip8::OP_Fx65(const uint16_t opcode) {
+
+}
+
+// SCD nibble
+void Chip8::OP_00Cn(const uint16_t opcode) {
+
+}
+
+// SCR
+void Chip8::OP_00FB(const uint16_t opcode) {
+
+}
+
+// SCL
+void Chip8::OP_00FC(const uint16_t opcode) {
+
+}
+
+// EXIT
+void Chip8::OP_00FD(const uint16_t opcode) {
+
+}
+
+// LOW
+void Chip8::OP_00FE(const uint16_t opcode) {
+
+}
+
+// HIGHT
+void Chip8::OP_00FF(const uint16_t opcode) {
+
+}
+
+// DRW Vx, Vy, 0
+void Chip8::OP_Dxy0(const uint16_t opcode) {
+
+}
+
+// LD HF, Vx
+void Chip8::OP_Fx30(const uint16_t opcode) {
+
+}
+
+// LD R, Vx
+void Chip8::OP_Fx75(const uint16_t opcode) {
+
+}
+
+// LD Vx, R
+void Chip8::OP_Fx85(const uint16_t opcode) {
+
+}
