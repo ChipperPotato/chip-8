@@ -4,8 +4,12 @@
 #include <cstdint>
 #include <string>
 
+enum class chip {STANDARD, SUPER, MEGA};
+
 class Chip8 {
 private:
+	chip chip;               // Keeps track of what kind of chip
+
 	uint8_t memory[4096]{};  // 4 KiB of memory
 	uint8_t registers[16]{}; // 16, 8-bit registers
 
@@ -15,6 +19,7 @@ private:
 	uint16_t stack[16]{};    // 16-level stack
 	uint8_t sp{};            // 8-bit stack pointer
 
+	uint8_t* gfx;
 	uint8_t delayTimer{};      // 8-bit delay timer
 	uint8_t soundTimer{};      // 8-bit sound timer
 
@@ -93,7 +98,8 @@ private:
 	// Output and Input are not included here
 
 public:
-	Chip8();               // Constructor
+	Chip8();                             // Constructor for Chip-8
+	Chip8(const std::string super);      // Constructor for Super Chip-8
 
 	bool loadROM(const std::string& filename);
 	void cycle();

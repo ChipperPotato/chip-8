@@ -1,4 +1,5 @@
 #include "../include/chip8.h"
+#include <cstring>
 #include <fstream>
 #include <filesystem>
 
@@ -9,9 +10,29 @@
 const unsigned int START_ADDR = 0x200;
 
 // Default constructor
-
 Chip8::Chip8(): index(0), pc(0x200), sp(0),
                 delayTimer(0), soundTimer(0) {
+
+  // Gfx array for regular Chip-8
+  gfx = new uint8_t[64 * 32];
+
+  chip = chip::STANDARD;
+
+  // Load the fontset into memory
+  for (int i = 0; i < 80; i++) {
+  	memory[i] = fontset[i];
+  }
+
+}
+
+// Super Chip-8 constructor
+Chip8::Chip8(const std::string super): index(0), pc(0x200), sp(0),
+                                       delayTimer(0), soundTimer(0) {
+
+  // Gfx array for Super Chip-8
+  gfx = new uint8_t[128 * 64];
+
+  chip = chip::SUPER;
 
   // Load the fontset into memory
   for (int i = 0; i < 80; i++) {
@@ -264,12 +285,26 @@ void Chip8::cycle() {
 
 // EXECUTE opcodes
 
+// ----------- Standard Chip-8 -----------
+
 // CLS
 void Chip8::OP_00E0(const uint16_t opcode) {
 	// DEBUG: Print out the current OP Code
 	std::cout << " | CLS" << std::endl;
 
 	// TODO: this is probably some SDL stuff
+	uint8_t height, width;
+
+	if (chip == chip::STANDARD) {
+		height = 32;
+		width = 64;
+	} else if (chip == chip::SUPER) {
+		height = 64;
+		width = 128;
+	}
+
+	// Zero out the screen
+	memset(&gfx, 0, height * width);
 }
 
 // RET
@@ -404,26 +439,35 @@ void Chip8::OP_8xyE(const uint16_t opcode) {
 
 // SNE Vx, Vy
 void Chip8::OP_9xy0(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
 
+	if (registers[Vx] != registers[Vy]) {
+		pc += 2;
+	}
 }
 
 // LD I, addr
 void Chip8::OP_Annn(const uint16_t opcode) {
-
+	index = (opcode & 0x0FFF);
 }
 
 // JP V0, addr
 void Chip8::OP_Bnnn(const uint16_t opcode) {
-
+	registers[0x0] = opcode & 0x0FFF;
 }
 
 // RND Vx, byte
 void Chip8::OP_Cxkk(const uint16_t opcode) {
+	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	srand(time(nullptr));
 
+	registers[Vx] = (rand() % 255) & (opcode & 0x00FF);
 }
 
 // DRW Vx, Vy, nibble
 void Chip8::OP_Dxyn(const uint16_t opcode) {
+	// TODO: this is probably some SDL stuff
 
 }
 
