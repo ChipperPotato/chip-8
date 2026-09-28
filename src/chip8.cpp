@@ -11,7 +11,14 @@ const unsigned int START_ADDR = 0x200;
 // Default constructor
 
 Chip8::Chip8(): index(0), pc(0x200), sp(0),
-                delayTimer(0), soundTimer(0) {}
+                delayTimer(0), soundTimer(0) {
+
+  // Load the fontset into memory
+  for (int i = 0; i < 80; i++) {
+  	memory[i] = fontset[i];
+  }
+
+}
 
 // Load ROMs with their filename
 bool Chip8::loadROM(const std::string& filename) {
