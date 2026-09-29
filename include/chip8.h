@@ -102,7 +102,7 @@ private:
 
 public:
 	Chip8();                             // Constructor for Chip-8
-	Chip8(const std::string super);      // Constructor for Super Chip-8
+	Chip8(const std::string& super);      // Constructor for Super Chip-8
 
 	bool loadROM(const std::string& filename);
 	void cycle();

@@ -31,8 +31,8 @@ Chip8::Chip8(): index(0), pc(0x200), sp(0),
 }
 
 // Super Chip-8 constructor
-Chip8::Chip8(const std::string super): index(0), pc(0x200), sp(0),
-                                       delayTimer(0), soundTimer(0) {
+Chip8::Chip8(const std::string& super): index(0), pc(0x200), sp(0),
+                                        delayTimer(0), soundTimer(0) {
 
 	height = 64;
 	width = 128;
@@ -626,7 +626,7 @@ void Chip8::OP_Fx33(const uint16_t opcode) {
 void Chip8::OP_Fx55(const uint16_t opcode) {
 	uint8_t x = (opcode & 0x0F00) >> 8;
 
-	for (uint8_t i = 0; i < x; i++) {
+	for (uint8_t i = 0; i <= x; i++) {
 		memory[index + i] = registers[i];
 	}
 }
@@ -636,7 +636,7 @@ void Chip8::OP_Fx65(const uint16_t opcode) {
 
 	uint8_t x = (opcode & 0x0F00) >> 8;
 
-	for (uint8_t i = 0; i < x; i++) {
+	for (uint8_t i = 0; i <= x; i++) {
 		registers[i] = memory[index + i];
 	}
 }
@@ -693,6 +693,15 @@ void Chip8::OP_Fx85(const uint16_t opcode) {
 
 }
 
+// Update Timers
+void Chip8::updateTimers() {
+	if (delayTimer > 0) {
+		delayTimer--;
+	}
+	if (soundTimer > 0) {
+		soundTimer--;
+	}
+}
 
 // Destructor for the class
 Chip8::~Chip8() {
