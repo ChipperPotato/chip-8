@@ -13,14 +13,15 @@ const unsigned int START_ADDR = 0x200;
 Chip8::Chip8(): index(0), pc(0x200), sp(0),
                 delayTimer(0), soundTimer(0) {
 
+	height = 32;
+	width = 64;
+
   // Gfx array for regular Chip-8
-  gfx = new uint8_t[64 * 32];
+  gfx = new uint32_t[height * width]{};
 
   // Random number generation
 	srand(time(nullptr));
 
-	height = 32;
-	width = 64;
 
   // Load the fontset into memory
   for (int i = 0; i < 80; i++) {
@@ -33,16 +34,14 @@ Chip8::Chip8(): index(0), pc(0x200), sp(0),
 Chip8::Chip8(const std::string super): index(0), pc(0x200), sp(0),
                                        delayTimer(0), soundTimer(0) {
 
-  // Gfx array for Super Chip-8
-  gfx = new uint8_t[128 * 64];
-
-  // Random number generation
-	srand(time(nullptr));
-
 	height = 64;
 	width = 128;
 
-  chip = chip::SUPER;
+  // Gfx array for Super Chip-8
+  gfx = new uint32_t[height * width]{};
+
+  // Random number generation
+	srand(time(nullptr));
 
   // Load the fontset into memory
   for (int i = 0; i < 80; i++) {
@@ -299,13 +298,10 @@ void Chip8::cycle() {
 
 // CLS
 void Chip8::OP_00E0(const uint16_t opcode) {
-	// DEBUG: Print out the current OP Code
-	std::cout << " | CLS" << std::endl;
-
 	// TODO: this is probably some SDL stuff
 
 	// Zero out the screen
-	memset(gfx, 0, height * width);
+	memset(gfx, 0, height * width * sizeof(uint32_t));
 }
 
 // RET
@@ -340,26 +336,26 @@ void Chip8::OP_3xkk(const uint16_t opcode) {
 
 // SNE Vx, byte
 void Chip8::OP_4xkk(const uint16_t opcode) {
-	if (registers[opcode & 0x0F00 >> 8] != (opcode & 0x00FF)) {
+	if (registers[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF)) {
 		pc += 2;
 	}
 }
 
 // SE Vx, Vy
 void Chip8::OP_5xy0(const uint16_t opcode) {
-	if (registers[opcode & 0x0F00 >> 8] == registers[opcode & 0x00F0 >> 4]) {
+	if (registers[(opcode & 0x0F00) >> 8] == registers[(opcode & 0x00F0) >> 4]) {
 		pc += 2;
 	}
 }
 
 // LD Vx, byte
 void Chip8::OP_6xkk(const uint16_t opcode) {
-	registers[opcode & 0x0F00 >> 8] = opcode & 0x00FF;
+	registers[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
 }
 
 // ADD Vx, byte
 void Chip8::OP_7xkk(const uint16_t opcode) {
-	registers[opcode & 0x0F00 >> 8] += opcode & 0x00FF;
+	registers[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
 }
 
 // LD Vx, Vy
@@ -399,10 +395,11 @@ void Chip8::OP_8xy4(const uint16_t opcode) {
 	uint8_t Vx = registers[(opcode & 0x0F00) >> 8];
 	uint8_t Vy = registers[(opcode & 0x00F0) >> 4];
 
-	uint8_t sum = Vx + Vy;
+	// uint16_t so we can detect overflows
+	uint16_t sum = Vx + Vy;
 
-	registers[0xF] = sum > 255 ? 1 : 0;
 	registers[(opcode & 0x0F00) >> 8] = sum & 0xFF;
+	registers[0xF] = sum > 255 ? 1 : 0;
 }
 
 // SUB Vx, Vy
@@ -420,7 +417,7 @@ void Chip8::OP_8xy5(const uint16_t opcode) {
 // SHR Vx {, Vy}
 void Chip8::OP_8xy6(const uint16_t opcode) {
 	uint8_t x = (opcode & 0x0F00) >> 8;
-	uint8_t flag = opcode & 0x0001;
+	uint8_t flag = registers[x] & 0x1;
 
 	registers[x] = registers[x] >> 1;
 	registers[0xF] = flag;
@@ -434,7 +431,7 @@ void Chip8::OP_8xy7(const uint16_t opcode) {
 	// This is needed to succeed in edge case where VF is an operand
 	uint8_t flag = registers[y] > registers[x] ? 1 : 0;
 
-	registers[y] -= registers[x];
+	registers[x] = registers[y] - registers[x];
 	registers[0xF] = flag;
 }
 
@@ -472,39 +469,53 @@ void Chip8::OP_Bnnn(const uint16_t opcode) {
 // RND Vx, byte
 void Chip8::OP_Cxkk(const uint16_t opcode) {
 	uint8_t x = (opcode & 0x0F00) >> 8;
-	registers[x] = (rand() % 255) & (opcode & 0x00FF);
+	registers[x] = (rand() % 256) & (opcode & 0x00FF);
 }
 
 // DRW Vx, Vy, nibble
 void Chip8::OP_Dxyn(const uint16_t opcode) {
     const uint8_t x = (opcode & 0x0F00) >> 8;
     const uint8_t y = (opcode & 0x00F0) >> 4;
-    const uint8_t height = opcode & 0x000F;
+    const uint8_t rows = opcode & 0x000F;
 
     // Wrap sprite position when outside the display coordinates
-    const uint8_t xPos = registers[x] % 64;
-    const uint8_t yPos = registers[y] % 32;
+    const uint8_t xPos = registers[x] % width;
+    const uint8_t yPos = registers[y] % height;
 
     // Clear the collision flag for now
     registers[0xF] = 0;
 
-    for (int i = 0; i < height; i++) {
+    for (int i = 0; i < rows; i++) {
         const uint8_t spriteByte = memory[index + i];
         for (int j = 0; j < 8; j++) {
             // Draw and test for collisions one bit at a time
-            if (spriteByte & (0x80 >> j)) {
-                uint8_t px = (xPos + j) % 64;
-                uint8_t py = (yPos + i) % 32;
-                uint8_t &pixel = gfx[py * 64 + px];
 
-                // Set VF if there was a collision
-                if (pixel == 1) {
-                    registers[0xF] = 1;
-                }
+            // This is if we want clipping
+            if (xPos + j >= width || yPos + i >= height) continue;
 
-                // XOR sprite onto the screen
-                pixel ^= 1;
-            }
+            uint32_t &pixel = gfx[(yPos + i) * width + (xPos + j)];
+
+            // Set VF if there was a collision
+            if (pixel == 0xFFFFFFFF) registers[0xF] = 1;
+
+            // XOR sprite onto the screen
+            pixel ^= 0xFFFFFFFF;
+
+
+						// This is if we want wrapping
+						// if (spriteByte & (0x80 >> j)) {
+						//     uint8_t px = (xPos + j) % width;
+						//     uint8_t py = (yPos + i) % height;
+						//     uint32_t &pixel = gfx[py * width + px];
+
+						//     // Set VF if there was a collision
+						//     if (pixel == 0xFFFFFFFF) {
+						//         registers[0xF] = 1;
+						//     }
+
+						//     // XOR sprite onto the screen
+						//     pixel ^= 0xFFFFFFFF;
+						// }
         }
     }
 }
