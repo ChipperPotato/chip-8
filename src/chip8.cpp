@@ -25,7 +25,7 @@ Chip8::Chip8(): index(0), pc(0x200), sp(0),
 
   // Load the fontset into memory
   for (int i = 0; i < 80; i++) {
-  	memory[i] = fontset[i];
+  	memory[0x50 + i] = fontset[i];
   }
 
 }
@@ -45,7 +45,7 @@ Chip8::Chip8(const std::string super): index(0), pc(0x200), sp(0),
 
   // Load the fontset into memory
   for (int i = 0; i < 80; i++) {
-  	memory[i] = fontset[i];
+  	memory[0x50 + i] = fontset[i];
   }
 
 }
@@ -100,7 +100,8 @@ void Chip8::cycle() {
 	          << " | Opcode: 0x"
 	          << std::setw(4)           // Opcodes represented in 4 hex digits
 	          << opcode
-						<< std::dec;              // Back to decimal
+						<< std::dec               // Back to decimal
+						<< std::endl;
 
 	// DECODE the opcode
 	switch (opcode & 0xF000) {
@@ -196,7 +197,8 @@ void Chip8::cycle() {
 					OP_8xyE(opcode);
 					break;
 				default:
-					std::cout << "Unknown opcode: " << opcode << std::endl;
+					std::cout << std::hex << "Unknown opcode: "
+					          << opcode  << std::dec << std::endl;
 					break;
 			}
 			break;
@@ -237,7 +239,8 @@ void Chip8::cycle() {
 					OP_ExA1(opcode);
 					break;
 				default:
-					std::cout << "Unknown opcode: " << opcode << std::endl;
+					std::cout << std::hex << "Unknown opcode: "
+					          << opcode  << std::dec << std::endl;
 					break;
 			}
 			break;
@@ -282,12 +285,14 @@ void Chip8::cycle() {
 					OP_Fx85(opcode);
 					break;
 				default:
-					std::cout << "Unknown opcode: " << opcode << std::endl;
+					std::cout << std::hex << "Unknown opcode: "
+					          << opcode  << std::dec << std::endl;
 					break;
 			}
 			break;
 		default:
-			std::cout << "Unknown opcode: " << opcode << std::endl;
+			std::cout << std::hex << "Unknown opcode: "
+			          << opcode  << std::dec << std::endl;
 			break;
 	}
 }
@@ -298,10 +303,9 @@ void Chip8::cycle() {
 
 // CLS
 void Chip8::OP_00E0(const uint16_t opcode) {
-	// TODO: this is probably some SDL stuff
-
 	// Zero out the screen
 	memset(gfx, 0, height * width * sizeof(uint32_t));
+	drawFlag = true;
 }
 
 // RET
@@ -372,6 +376,9 @@ void Chip8::OP_8xy1(const uint16_t opcode) {
 	uint8_t y = (opcode & 0x00F0) >> 4;
 
 	registers[x] = registers[x] | registers[y];
+
+	// AND, OR, XOR reset vF
+	// registers[0xF] = 0;
 }
 
 // AND Vx, Vy
@@ -380,6 +387,9 @@ void Chip8::OP_8xy2(const uint16_t opcode) {
 	uint8_t y = (opcode & 0x00F0) >> 4;
 
 	registers[x] = registers[x] & registers[y];
+
+	// AND, OR, XOR reset vF
+	// registers[0xF] = 0;
 }
 
 // XOR Vx, Vy
@@ -388,6 +398,9 @@ void Chip8::OP_8xy3(const uint16_t opcode) {
 	uint8_t y = (opcode & 0x00F0) >> 4;
 
 	registers[x] = registers[x] ^ registers[y];
+
+	// AND, OR, XOR reset vF
+	// registers[0xF] = 0;
 }
 
 // ADD Vx, Vy
@@ -491,6 +504,7 @@ void Chip8::OP_Dxyn(const uint16_t opcode) {
             // Draw and test for collisions one bit at a time
 
             // This is if we want clipping
+						if (!(spriteByte & (0x80 >> j))) continue;
             if (xPos + j >= width || yPos + i >= height) continue;
 
             uint32_t &pixel = gfx[(yPos + i) * width + (xPos + j)];
@@ -518,61 +532,113 @@ void Chip8::OP_Dxyn(const uint16_t opcode) {
 						// }
         }
     }
+    drawFlag = true;
 }
 
 // SKP Vx
 void Chip8::OP_Ex9E(const uint16_t opcode) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t key = registers[x];
 
+	if (keypad[key]) {
+		pc += 2;
+	}
 }
 
 // SKNP Vx
 void Chip8::OP_ExA1(const uint16_t opcode) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t key = registers[x];
 
+	if (!keypad[key]) {
+		pc += 2;
+	}
 }
 
 // LD Vx, DT
 void Chip8::OP_Fx07(const uint16_t opcode) {
-
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	registers[x] = delayTimer;
 }
 
 // LD Vx, K
 void Chip8::OP_Fx0A(const uint16_t opcode) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
 
+	// Checks for key presses
+	for (uint8_t i = 0; i < 16; i++) {
+		if (keypad[i]) {
+			// Store the value of the key in Vx
+			registers[x] = i;
+			return;
+		}
+	}
+
+	// If we reached here, which means no keypress yet,
+	// thus we repeat this instruction by decrementing PC
+	pc -= 2;
 }
 
 // LD DT, Vx
 void Chip8::OP_Fx15(const uint16_t opcode) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
 
+	delayTimer = registers[x];
 }
 
 // LD ST, Vx
 void Chip8::OP_Fx18(const uint16_t opcode) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
 
+	soundTimer = registers[x];
 }
 
 // ADD I, Vx
 void Chip8::OP_Fx1E(const uint16_t opcode) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
 
+	index += registers[x];
 }
 
 // LD F, Vx
 void Chip8::OP_Fx29(const uint16_t opcode) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t fontSprite = registers[x];
 
+	index = 0x050 + (fontSprite * 5);
 }
 
 // LD B, Vx
 void Chip8::OP_Fx33(const uint16_t opcode) {
+	uint8_t Vx = registers[(opcode & 0x0F00) >> 8];
 
+	// Ones digit at I + 2
+	memory[index + 2] = Vx % 10;
+
+	// Tens digit at I + 1
+	memory[index + 1] = (Vx / 10) % 10;
+
+	// Hundreds digit at I
+	memory[index] = (Vx / 100) % 100;
 }
 
 // LD [I], Vx
 void Chip8::OP_Fx55(const uint16_t opcode) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
 
+	for (uint8_t i = 0; i < x; i++) {
+		memory[index + i] = registers[i];
+	}
 }
 
 // LD Vx, [I]
 void Chip8::OP_Fx65(const uint16_t opcode) {
 
+	uint8_t x = (opcode & 0x0F00) >> 8;
+
+	for (uint8_t i = 0; i < x; i++) {
+		registers[i] = memory[index + i];
+	}
 }
 
 // ------------ Super Chip-48 ------------
@@ -625,4 +691,10 @@ void Chip8::OP_Fx75(const uint16_t opcode) {
 // LD Vx, R
 void Chip8::OP_Fx85(const uint16_t opcode) {
 
+}
+
+
+// Destructor for the class
+Chip8::~Chip8() {
+	delete[] gfx;
 }

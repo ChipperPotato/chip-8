@@ -6,6 +6,7 @@
 
 class Chip8 {
 private:
+	bool drawFlag = false;   // Flag for keeping track of drawing screen
 	uint8_t height, width;   // Keeps track of graphics resolution
 
 	uint8_t memory[4096]{};  // 4 KiB of memory
@@ -20,6 +21,10 @@ private:
 	uint32_t* gfx;
 	uint8_t delayTimer{};    // 8-bit delay timer
 	uint8_t soundTimer{};    // 8-bit sound timer
+
+	// Keypad
+
+	uint8_t keypad[16]{};
 
 	// Font Set
 
@@ -103,7 +108,7 @@ public:
 	void cycle();
 	void updateTimers();
 
-
+	~Chip8();
 };
 
 #endif
