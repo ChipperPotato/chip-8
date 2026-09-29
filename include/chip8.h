@@ -6,8 +6,7 @@
 
 class Chip8 {
 private:
-	bool drawFlag = false;   // Flag for keeping track of drawing screen
-	uint8_t height, width;   // Keeps track of graphics resolution
+	int8_t wait{};
 
 	uint8_t memory[4096]{};  // 4 KiB of memory
 	uint8_t registers[16]{}; // 16, 8-bit registers
@@ -18,13 +17,8 @@ private:
 	uint16_t stack[16]{};    // 16-level stack
 	uint8_t sp{};            // 8-bit stack pointer
 
-	uint32_t* gfx;
 	uint8_t delayTimer{};    // 8-bit delay timer
 	uint8_t soundTimer{};    // 8-bit sound timer
-
-	// Keypad
-
-	uint8_t keypad[16]{};
 
 	// Font Set
 
@@ -101,8 +95,13 @@ private:
 	// Output and Input are not included here
 
 public:
+	bool drawFlag = false;       // Flag for keeping track of drawing screen
+	uint8_t height{}, width{};   // Keeps track of graphics resolution
+	uint8_t keypad[16]{};        // 4x4 Keypad
+	uint32_t* gfx = nullptr;
+
 	Chip8();                             // Constructor for Chip-8
-	Chip8(const std::string& super);      // Constructor for Super Chip-8
+	Chip8(const std::string& super);     // Constructor for Super Chip-8
 
 	bool loadROM(const std::string& filename);
 	void cycle();

@@ -565,13 +565,19 @@ void Chip8::OP_Fx07(const uint16_t opcode) {
 void Chip8::OP_Fx0A(const uint16_t opcode) {
 	uint8_t x = (opcode & 0x0F00) >> 8;
 
-	// Checks for key presses
-	for (uint8_t i = 0; i < 16; i++) {
-		if (keypad[i]) {
-			// Store the value of the key in Vx
-			registers[x] = i;
-			return;
+	if (wait < 0) {
+		// Checks for key presses
+		for (uint8_t i = 0; i < 16; i++) {
+			if (keypad[i]) {
+				// store i and wait
+				wait = i;
+				break;
+			}
 		}
+	} else if (!keypad[wait]) {
+		registers[x] = wait;
+		wait = -1;
+		return;
 	}
 
 	// If we reached here, which means no keypress yet,

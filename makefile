@@ -3,6 +3,8 @@ CXX := g++
 
 # Compiler flags
 CXXFLAGS := -Wall -std=c++17 -I include
+# Linker flags
+LDFLAGS := -lSDL3
 
 TARGET := chip8
 
@@ -12,7 +14,7 @@ OBJ := $(SRC:.cpp=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CXX) $^ -o $@
+	$(CXX) $^ -o $@ $(LDFLAGS)
 
 src/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
