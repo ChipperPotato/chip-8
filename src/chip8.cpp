@@ -16,7 +16,11 @@ Chip8::Chip8(): index(0), pc(0x200), sp(0),
   // Gfx array for regular Chip-8
   gfx = new uint8_t[64 * 32];
 
-  chip = chip::STANDARD;
+  // Random number generation
+	srand(time(nullptr));
+
+	height = 32;
+	width = 64;
 
   // Load the fontset into memory
   for (int i = 0; i < 80; i++) {
@@ -31,6 +35,12 @@ Chip8::Chip8(const std::string super): index(0), pc(0x200), sp(0),
 
   // Gfx array for Super Chip-8
   gfx = new uint8_t[128 * 64];
+
+  // Random number generation
+	srand(time(nullptr));
+
+	height = 64;
+	width = 128;
 
   chip = chip::SUPER;
 
@@ -293,24 +303,15 @@ void Chip8::OP_00E0(const uint16_t opcode) {
 	std::cout << " | CLS" << std::endl;
 
 	// TODO: this is probably some SDL stuff
-	uint8_t height, width;
-
-	if (chip == chip::STANDARD) {
-		height = 32;
-		width = 64;
-	} else if (chip == chip::SUPER) {
-		height = 64;
-		width = 128;
-	}
 
 	// Zero out the screen
-	memset(&gfx, 0, height * width);
+	memset(gfx, 0, height * width);
 }
 
 // RET
 void Chip8::OP_00EE(const uint16_t opcode) {
-	index = stack[sp];
-	sp--;
+	--sp;
+	pc = stack[sp];
 }
 
 // SYS addr
@@ -325,12 +326,14 @@ void Chip8::OP_1nnn(const uint16_t opcode) {
 
 // CALL addr
 void Chip8::OP_2nnn(const uint16_t opcode) {
-	stack[sp++] = index;
+	stack[sp++] = pc;
+	pc = opcode & 0x0FFF;
 }
 
 // SE Vx, byte
 void Chip8::OP_3xkk(const uint16_t opcode) {
-	if (registers[opcode & 0x0F00 >> 8] == (opcode & 0x00FF)) {
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	if (registers[x] == (opcode & 0x00FF)) {
 		pc += 2;
 	}
 }
@@ -361,88 +364,97 @@ void Chip8::OP_7xkk(const uint16_t opcode) {
 
 // LD Vx, Vy
 void Chip8::OP_8xy0(const uint16_t opcode) {
-	registers[opcode & 0x0F00 >> 8] = registers[opcode & 0x00F0 >> 8];
+	uint8_t Vx = (opcode & 0x0F00) >> 8;
+	uint8_t Vy = (opcode & 0x00F0) >> 4;
+
+	registers[Vx] = registers[Vy];
 }
 
 // OR Vx, Vy
 void Chip8::OP_8xy1(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
-	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t y = (opcode & 0x00F0) >> 4;
 
-	registers[Vx] = registers[Vx] | registers[Vy];
+	registers[x] = registers[x] | registers[y];
 }
 
 // AND Vx, Vy
 void Chip8::OP_8xy2(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
-	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t y = (opcode & 0x00F0) >> 4;
 
-	registers[Vx] = registers[Vx] & registers[Vy];
+	registers[x] = registers[x] & registers[y];
 }
 
 // XOR Vx, Vy
 void Chip8::OP_8xy3(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
-	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t y = (opcode & 0x00F0) >> 4;
 
-	registers[Vx] = registers[Vx] ^ registers[Vy];
+	registers[x] = registers[x] ^ registers[y];
 }
 
 // ADD Vx, Vy
 void Chip8::OP_8xy4(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
-	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
+	uint8_t Vx = registers[(opcode & 0x0F00) >> 8];
+	uint8_t Vy = registers[(opcode & 0x00F0) >> 4];
 
-	uint8_t sum = registers[Vx] + registers[Vy];
+	uint8_t sum = Vx + Vy;
 
 	registers[0xF] = sum > 255 ? 1 : 0;
-	registers[Vx] = sum & 0xFF;
+	registers[(opcode & 0x0F00) >> 8] = sum & 0xFF;
 }
 
 // SUB Vx, Vy
 void Chip8::OP_8xy5(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
-	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t y = (opcode & 0x00F0) >> 4;
 
-	uint8_t difference = registers[Vx] - registers[Vy];
+	// This is needed to succeed in edge case where VF is an operand
+	uint8_t flag = registers[x] > registers[y] ? 1 : 0;
 
-	registers[0xF] = registers[Vx] > registers[Vy] ? 1 : 0;
-	registers[Vx] = difference & 0xFF;
+	registers[x] -= registers[y];
+	registers[0xF] = flag;
 }
 
 // SHR Vx {, Vy}
 void Chip8::OP_8xy6(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t flag = opcode & 0x0001;
 
-	registers[0xF] = opcode & 0x0001;
-	registers[Vx] = registers[Vx] >> 1;
+	registers[x] = registers[x] >> 1;
+	registers[0xF] = flag;
 }
 
 // SUBN Vx, Vy
 void Chip8::OP_8xy7(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
-	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	uint8_t y = (opcode & 0x00F0) >> 4;
 
-	uint8_t difference = registers[Vy] - registers[Vx];
+	// This is needed to succeed in edge case where VF is an operand
+	uint8_t flag = registers[y] > registers[x] ? 1 : 0;
 
-	registers[0xF] = registers[Vy] > registers[Vx] ? 1 : 0;
-	registers[Vx] = difference & 0xFF;
+	registers[y] -= registers[x];
+	registers[0xF] = flag;
 }
 
 // SHL Vx {, Vy}
 void Chip8::OP_8xyE(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
+	uint8_t x = (opcode & 0x0F00) >> 8;
 
-	registers[0xF] = opcode & 0x0001;
-	registers[Vx] = registers[Vx] << 1;
+	// This is needed to succeed in edge case where VF is an operand
+	uint8_t flag = (registers[x] & 0x80) >> 7;
+
+	registers[x] = registers[x] << 1;
+	registers[0xF] = flag;
 }
 
 // SNE Vx, Vy
 void Chip8::OP_9xy0(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
-	uint8_t Vy = registers[opcode & 0x00F0 >> 4];
+	uint8_t Vx = registers[(opcode & 0x0F00) >> 8];
+	uint8_t Vy = registers[(opcode & 0x00F0) >> 4];
 
-	if (registers[Vx] != registers[Vy]) {
+	if (Vx != Vy) {
 		pc += 2;
 	}
 }
@@ -454,21 +466,47 @@ void Chip8::OP_Annn(const uint16_t opcode) {
 
 // JP V0, addr
 void Chip8::OP_Bnnn(const uint16_t opcode) {
-	registers[0x0] = opcode & 0x0FFF;
+	pc = registers[0x0] + (opcode & 0x0FFF);
 }
 
 // RND Vx, byte
 void Chip8::OP_Cxkk(const uint16_t opcode) {
-	uint8_t Vx = registers[opcode & 0x0F00 >> 8];
-	srand(time(nullptr));
-
-	registers[Vx] = (rand() % 255) & (opcode & 0x00FF);
+	uint8_t x = (opcode & 0x0F00) >> 8;
+	registers[x] = (rand() % 255) & (opcode & 0x00FF);
 }
 
 // DRW Vx, Vy, nibble
 void Chip8::OP_Dxyn(const uint16_t opcode) {
-	// TODO: this is probably some SDL stuff
+    const uint8_t x = (opcode & 0x0F00) >> 8;
+    const uint8_t y = (opcode & 0x00F0) >> 4;
+    const uint8_t height = opcode & 0x000F;
 
+    // Wrap sprite position when outside the display coordinates
+    const uint8_t xPos = registers[x] % 64;
+    const uint8_t yPos = registers[y] % 32;
+
+    // Clear the collision flag for now
+    registers[0xF] = 0;
+
+    for (int i = 0; i < height; i++) {
+        const uint8_t spriteByte = memory[index + i];
+        for (int j = 0; j < 8; j++) {
+            // Draw and test for collisions one bit at a time
+            if (spriteByte & (0x80 >> j)) {
+                uint8_t px = (xPos + j) % 64;
+                uint8_t py = (yPos + i) % 32;
+                uint8_t &pixel = gfx[py * 64 + px];
+
+                // Set VF if there was a collision
+                if (pixel == 1) {
+                    registers[0xF] = 1;
+                }
+
+                // XOR sprite onto the screen
+                pixel ^= 1;
+            }
+        }
+    }
 }
 
 // SKP Vx

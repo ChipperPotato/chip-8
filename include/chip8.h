@@ -9,6 +9,7 @@ enum class chip {STANDARD, SUPER, MEGA};
 class Chip8 {
 private:
 	chip chip;               // Keeps track of what kind of chip
+	uint8_t height, width;    // Keeps track of graphics resolution
 
 	uint8_t memory[4096]{};  // 4 KiB of memory
 	uint8_t registers[16]{}; // 16, 8-bit registers
