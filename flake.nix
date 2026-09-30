@@ -15,7 +15,7 @@
           buildInputs = [
             pkgs.gcc
             pkgs.gnumake
-            pkgs.SDL2
+            pkgs.sdl3
           ];
         };
       }

@@ -92,16 +92,16 @@ void Chip8::cycle() {
 	pc += 2;
 
 	// DEBUG: Print out the current OP Code
-	std::cout << "PC: 0x"
-	          << std::hex               // Print in hexadecimal
-	          << std::setfill('0')
-	          << std::setw(3)           // PC represented in 3 hex digits
-	          << this->pc
-	          << " | Opcode: 0x"
-	          << std::setw(4)           // Opcodes represented in 4 hex digits
-	          << opcode
-						<< std::dec               // Back to decimal
-						<< std::endl;
+	// std::cout << "PC: 0x"
+	//           << std::hex               // Print in hexadecimal
+	//           << std::setfill('0')
+	//           << std::setw(3)           // PC represented in 3 hex digits
+	//           << this->pc
+	//           << " | Opcode: 0x"
+	//           << std::setw(4)           // Opcodes represented in 4 hex digits
+	//           << opcode
+	// 					<< std::dec               // Back to decimal
+	// 					<< std::endl;
 
 	// DECODE the opcode
 	switch (opcode & 0xF000) {
