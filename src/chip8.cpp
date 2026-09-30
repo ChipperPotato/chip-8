@@ -19,6 +19,10 @@ Chip8::Chip8(): index(0), pc(0x200), sp(0),
   // Gfx array for regular Chip-8
   gfx = new uint32_t[height * width]{};
 
+	for (int i = 0; i < width * height; i++) {
+		gfx[i] = 0x306230FF;
+	}
+
   // Random number generation
 	srand(time(nullptr));
 
@@ -39,6 +43,10 @@ Chip8::Chip8(const std::string& super): index(0), pc(0x200), sp(0),
 
   // Gfx array for Super Chip-8
   gfx = new uint32_t[height * width]{};
+
+	for (int i = 0; i < width * height; i++) {
+		gfx[i] = 0x306230FF;
+	}
 
   // Random number generation
 	srand(time(nullptr));
@@ -304,7 +312,9 @@ void Chip8::cycle() {
 // CLS
 void Chip8::OP_00E0(const uint16_t opcode) {
 	// Zero out the screen
-	memset(gfx, 0, height * width * sizeof(uint32_t));
+	for (int i = 0; i < width * height; i++) {
+		gfx[i] = 0x306230FF;
+	}
 	drawFlag = true;
 }
 
@@ -510,10 +520,10 @@ void Chip8::OP_Dxyn(const uint16_t opcode) {
             uint32_t &pixel = gfx[(yPos + i) * width + (xPos + j)];
 
             // Set VF if there was a collision
-            if (pixel == 0xFFFFFFFF) registers[0xF] = 1;
+            if (pixel == 0x9BBC0FFF) registers[0xF] = 1;
 
             // XOR sprite onto the screen
-            pixel ^= 0xFFFFFFFF;
+            pixel ^= (0x9BBC0FFF ^ 0x306230FF);
 
 
 						// This is if we want wrapping
